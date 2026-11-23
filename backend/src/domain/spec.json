@@ -1,0 +1,19 @@
+{
+  "organization": "森井地暖",
+  "tagline": "并行巡检规程工时等效复核",
+  "source": "森井地暖运维组、区段双规程计时工单（模拟）",
+  "record_name": "区段配对巡检工单",
+  "algorithm": "同一区段配对差的双单侧 t 等效检验（TOST）",
+  "formula": "每区段工时差 d = 新规程 − 旧规程。较低等效界为 −Δ，较高等效界为 +Δ。以 s(d)/√n 为标准误，两次单侧 t 检验分别检验均差高于 −Δ、低于 +Δ。两项均通过时判定等效，等价于 100×(1−2α)% 置信区间完全落在两界之间。",
+  "decision_prompt": "同一批地暖区段换用并行巡检规程后，平均工时差能否控制在预先登记的分钟容许范围内？",
+  "fields": [
+    {"key": "segment", "label": "巡检区段编号", "type": "text", "example": "SJ-33", "help": "每区段一条完整配对，同一编号不能跨记录重复。"},
+    {"key": "inspection_date", "label": "配对巡检日期", "type": "date", "example": "2026-11-17"},
+    {"key": "old_minutes", "label": "旧规程巡检工时（分钟）", "type": "number", "min": 0.01, "max": 480, "example": 30.4},
+    {"key": "new_minutes", "label": "新规程巡检工时（分钟）", "type": "number", "min": 0.01, "max": 480, "example": 31.2, "help": "与旧规程计时口径一致，两次检查均覆盖同一区段。"}
+  ],
+  "parameters": [
+    {"key": "margin_minutes", "label": "可接受的平均工时差（±分钟）", "type": "number", "min": 0.01, "max": 120, "default": 2, "help": "须在看数据之前确定。填 2 表示等效区间 (−2, +2) 分钟。"},
+    {"key": "alpha", "label": "单侧显著性水平 α", "type": "number", "min": 0.001, "max": 0.2, "default": 0.05, "help": "每个单侧检验使用同一个 α，0.05 对应 90% 置信区间。"}
+  ]
+}
