@@ -9,3 +9,17 @@
   --radius: 0px;
   --login-ratio: 1.63fr 1fr;
 }
+
+/* 批次与版本化复核 */
+.batch-create { border:1px solid var(--line); background:var(--surface); margin-bottom:18px; }
+.batch-create form { border-top:1px solid var(--line); padding:15px; }
+.download-strip { flex:1 1 100%; display:flex; gap:10px; flex-wrap:wrap; }
+.flag { color:oklch(.48 .15 45); }
+.text-link { font-weight:600; }
+.batch-context { color:var(--quiet); font-size:.9rem; margin:0 0 16px; }
+.button-link { display:inline-block; padding:8px 15px; border:1px solid var(--accent); color:var(--accent); font-weight:600; text-decoration:none; }
+.button-link:hover { color:var(--light); background:var(--accent); }
+.stale-note { border-inline-start:4px solid oklch(.56 .13 45); background:oklch(.95 .03 55); padding:11px 16px; margin:0 0 18px; font-size:.9rem; }
+.status-superseded,.status-unresolved,.status-conflict { color:oklch(.38 .13 28); background:oklch(.91 .035 28); }
+.status-replaced,.status-withdrawn { color:var(--quiet); background:var(--wash); }
+.status-valid,.status-applied { color:oklch(.34 .092 150); background:oklch(.92 .045 153); }

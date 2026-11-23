@@ -16,6 +16,7 @@ from src.routes import analysis, records, reports, session
 from src.services.broker import redis
 from src.services.errors import BusinessError
 
+
 logger = logging.getLogger('uvicorn.error')
 
 

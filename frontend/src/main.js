@@ -1,8 +1,8 @@
 import { get } from './api/client.js';
 import { frame } from './components/common/frame.js';
 import { analysisPage, wireAnalysis } from './pages/analysis.js';
+import { batchTablePage, registryPage, wireBatches, wireRegistry } from './pages/batches.js';
 import { loginPage, wireLogin } from './pages/login.js';
-import { observationPage, wireObservations } from './pages/observations.js';
 import { reportPage, wireReports } from './pages/reports.js';
 import { resultPage, wireResult } from './pages/result.js';
 import { route } from './router/hash.js';
@@ -10,7 +10,12 @@ import { store } from './stores/session.js';
 import { esc } from './utils/html.js';
 
 const root = document.getElementById('app');
-const pages = {observations:observationPage,analysis:analysisPage,result:resultPage,reports:reportPage};
+
+async function batchPage(spec, user, current) {
+  return current.id ? registryPage(spec, user, current) : batchTablePage(spec, user);
+}
+
+const pages = {batches:batchPage, analysis:analysisPage, result:resultPage, reports:reportPage};
 let navigationTick = 0;
 
 async function render() {
@@ -35,7 +40,7 @@ async function render() {
       if (location.hash) location.hash = '';
       render();
     });
-    if (current.page === 'observations') wireObservations(root, spec,render);
+    if (current.page === 'batches') current.id ? wireRegistry(root, spec, render) : wireBatches(root, render);
     if (current.page === 'analysis') wireAnalysis(root,spec);
     if (current.page === 'result') wireResult(root,render);
     if (current.page === 'reports') wireReports(root,render);

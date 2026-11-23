@@ -17,11 +17,11 @@ async function request(path, options = {}) {
 }
 
 export async function get(path) { return (await request(path)).json(); }
-export async function post(path, payload) {
+export async function post(path, payload = {}) {
   return (await request(path, {method:'POST', body: JSON.stringify(payload)})).json();
 }
-export async function importFile(file) {
-  return (await request('/observations/import', {method:'POST', body:file, headers:{'Content-Type':'text/csv'}})).json();
+export async function importFile(path, file) {
+  return (await request(path, {method:'POST', body:file, headers:{'Content-Type':'text/csv'}})).json();
 }
 export async function download(path, fallback) {
   const response = await request(path);

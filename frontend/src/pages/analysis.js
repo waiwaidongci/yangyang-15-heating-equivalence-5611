@@ -10,22 +10,34 @@ import { esc, timeLabel } from '../utils/html.js';
 export function runTable(runs, message) {
   return table([
     {label:'分析名称',html: row => `<a href="#result/${row.id}">${esc(row.title)}</a>`},
-    {label:'观测条数',key:'sample_size'}, {label:'状态',html:status},
+    {label:'版本',html: row => `v${row.version}`},
+    {label:'配对区段',key:'sample_size'}, {label:'状态',html:status},
     {label:'提交时间',html:row => timeLabel(row.created_at)},
   ], runs, message);
 }
 
-export async function analysisPage(spec, user) {
-  const runs = await get('/runs');
-  return `${intro('分析任务', spec.algorithm)}<div class="split"><section class="panel"><div class="panel-heading"><h2>计算条件</h2></div>
-    ${user.role === Role.ANALYST ? `<form id="run-form" class="panel-body"><label class="field"><span>分析名称</span><input name="title" required maxlength="120" value="${esc(spec.direction)}复核"></label><div class="form-grid">${spec.parameters.map(parameter => fieldControl(parameter,true)).join('')}</div>${formError}<button class="primary">提交计算</button></form>` : '<p class="panel-body">由业务分析员提交计算。此账号可查看当前角色有权访问的分析任务。</p>'}</section>
-    <aside class="method"><h2>计算口径</h2><p>${esc(spec.formula)}</p><p class="aside-note">提交时固化参与计算的观测清单，后续导入不会改变历史结果。</p></aside></div>
-    <section class="panel"><div class="panel-heading"><h2>历史分析</h2></div>${runTable(runs, '还没有可查看的分析。提交计算后可在这里追踪。')}</section>`;
+export async function analysisPage(spec, user, route) {
+  const batches = await get('/batches');
+  const chosen = route.id ? Number(route.id) : batches[0]?.id;
+  const batch = batches.find(item => item.id === chosen);
+  const runs = chosen ? await get(`/runs?batch_id=${chosen}`) : [];
+  const writable = user.role === Role.ANALYST;
+  const options = batches.map(item => `<option value="${item.id}" ${item.id === chosen ? 'selected' : ''}>${esc(item.name)}（${item.paired_count} 段配对）</option>`).join('');
+  const form = writable && batches.length ? `<form id="run-form" class="panel-body">
+    <label class="field"><span>计时批次</span><select name="batch_id" required>${options}</select></label>
+    <label class="field"><span>分析名称</span><input name="title" required maxlength="120" value="${esc(spec.direction)}复核"></label>
+    <div class="form-grid">${spec.parameters.map(parameter => fieldControl(parameter,true)).join('')}</div>${formError}<button class="primary">提交计算</button></form>` : '<p class="panel-body">由业务分析员提交计算。此账号可查看当前角色有权访问的分析任务。</p>';
+  return `${intro('分析任务', spec.algorithm)}
+    <div class="split"><section class="panel"><div class="panel-heading"><h2>计算条件</h2></div>${form}</section>
+    <aside class="method"><h2>计算口径</h2><p>${esc(spec.formula)}</p><p class="aside-note">提交时固化参与计算的有效工单清单，后续导入不会改变历史结果。同一批次的补测会形成多种配法，只有全部配法裁决一致时才给出结论。</p></aside></div>
+    ${batch ? `<p class="batch-context">当前批次：<b>${esc(batch.name)}</b>${batch.missing_count ? ` · 缺单 ${batch.missing_count} 段` : ''}</p>` : ''}
+    <section class="panel"><div class="panel-heading"><h2>历史分析${batch ? ` · ${esc(batch.name)}` : ''}</h2></div>${runTable(runs, '还没有可查看的分析。提交计算后可在这里追踪。')}</section>`;
 }
 
 export function wireAnalysis(root, spec) {
   bindForm(root.querySelector('#run-form'), async form => {
-    const run = await post('/runs', {title:form.elements.title.value,parameters:formValues(form,spec.parameters)});
+    const batchId = form.elements.batch_id.value;
+    const run = await post(`/runs?batch_id=${batchId}`, {title:form.elements.title.value,parameters:formValues(form,spec.parameters)});
     location.hash = `#result/${run.id}`;
   });
 }

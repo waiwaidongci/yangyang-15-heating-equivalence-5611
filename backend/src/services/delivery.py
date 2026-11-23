@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from src.config.project import SPEC
 from src.config.runtime import WORKDIR
-from src.constants.enums import Decision
+from src.constants.enums import Decision, RunStatus
 from src.models.base import utc_now
 from src.models.workflow import AnalysisRun, AuditEvent, Delivery, Review, Schedule
 from src.services.errors import BusinessError
@@ -14,6 +14,9 @@ from src.utils.formatting import csv_text
 
 
 def create_schedule(db, request, actor):
+    run = db.get(AnalysisRun, request.run_id)
+    if run is None or not run.result or run.status != RunStatus.SUCCEEDED:
+        raise BusinessError('只有已签核分析可以定时分发', 409)
     if not db.scalar(select(Review.id).where(Review.run_id == request.run_id, Review.decision == Decision.APPROVED)):
         raise BusinessError('只有已签核分析可以定时分发', 409)
     first_at = request.start_at.astimezone(timezone.utc).replace(tzinfo=None) if request.start_at else utc_now()
@@ -44,8 +47,14 @@ def dispatch_pending(db):
     if schedule is None:
         return False
     due_at = schedule.next_at
-    filename = f'{SPEC["slug"]}-plan{schedule.id}-{due_at:%Y%m%dT%H%M%S}.csv'
-    result = db.get(AnalysisRun, schedule.run_id).result
+    run = db.get(AnalysisRun, schedule.run_id)
+    if run is None or not run.result:
+        schedule.active = False
+        db.add(AuditEvent(actor='worker', action='schedule.stopped',
+                          detail=f'计划 #{schedule.id} 的来源分析已不可用'))
+        return True
+    filename = f'{SPEC["slug"]}-plan{schedule.id}-v{run.version}-{due_at:%Y%m%dT%H%M%S}.csv'
+    result = run.result
     WORKDIR.mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile(dir=WORKDIR, suffix='.tmp', delete=False) as temp:
         temp_name = Path(temp.name)

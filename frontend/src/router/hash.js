@@ -1,5 +1,5 @@
-const pages = new Set(['observations','analysis','result','reports']);
+const pages = new Set(['batches','analysis','result','reports']);
 export const route = () => {
   const [page,id] = location.hash.slice(1).split('/');
-  return {page:pages.has(page) ? page : 'observations',id};
+  return {page:pages.has(page) ? page : 'batches',id};
 };

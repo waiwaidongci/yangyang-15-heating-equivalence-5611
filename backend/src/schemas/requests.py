@@ -10,6 +10,33 @@ class Credentials(BaseModel):
     password: str = Field(min_length=1, max_length=128)
 
 
+class CreateBatch(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    note: str = Field(default='', max_length=300)
+
+    @field_validator('name')
+    @classmethod
+    def meaningful_name(cls, value):
+        if not value.strip():
+            raise ValueError('请填写批次名称')
+        return value.strip()
+
+
+class TicketInput(BaseModel):
+    code: str = Field(min_length=1, max_length=60)
+    segment: str = Field(min_length=1, max_length=60)
+    kind: str = Field(default='initial', max_length=20)
+    minutes: float | None = None
+    inspected_on: str = Field(min_length=10, max_length=10)
+    target_code: str | None = Field(default=None, max_length=60)
+    note: str | None = Field(default=None, max_length=300)
+    procedure: str | None = Field(default=None, max_length=8)
+
+
+class TicketBatchInput(BaseModel):
+    tickets: list[TicketInput] = Field(min_length=1, max_length=500)
+
+
 class CreateRun(BaseModel):
     title: str = Field(max_length=120)
     parameters: dict = Field(default_factory=dict)
